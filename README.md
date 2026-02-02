@@ -25,31 +25,7 @@ cd ~/.openclaw/skills
 git clone https://github.com/rexthepenguin/clawusecase-skill.git share-usecase
 ```
 
-## Setup
-
-### 1. Set API Secret
-
-The skill needs an API secret to submit use cases. Set it as an environment variable:
-
-```bash
-export CLAWUSECASE_API_SECRET="your-secret-here"
-```
-
-Or add to your OpenClaw config/environment.
-
-**Don't have a secret?** Contact [@josephliow](https://twitter.com/josephliow) to get one.
-
-### 2. Configure Author Info
-
-On first use, the skill will ask for your info:
-- Twitter/X handle (or GitHub username)
-- Platform (twitter, github, etc.)
-
-This is saved locally in `.clawusecase-config.json` for future submissions.
-
 ## Usage
-
-### Basic Usage
 
 Just type in your OpenClaw chat:
 
@@ -63,6 +39,14 @@ Your assistant will:
 3. Generate a well-formatted use case
 4. Show it to you for approval
 5. Submit it to clawusecase.com
+
+### First Time Setup
+
+On first use, you'll be asked for:
+- Twitter/X handle (or GitHub username)
+- Platform (twitter, github, etc.)
+
+This is saved locally for future submissions.
 
 ### Example
 

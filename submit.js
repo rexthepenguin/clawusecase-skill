@@ -19,13 +19,19 @@
  */
 
 const https = require('https');
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// API Configuration
-const API_URL = 'clawusecase.com';
-const API_PATH = '/api/submissions';
-const API_SECRET = process.env.CLAWUSECASE_API_SECRET || '';
+// Load config
+const configPath = path.join(__dirname, 'config.json');
+const config = fs.existsSync(configPath) 
+  ? JSON.parse(fs.readFileSync(configPath, 'utf8'))
+  : {};
+
+// API Configuration (env var overrides config file)
+const API_URL = process.env.CLAWUSECASE_API_URL || config.apiUrl || 'clawusecase.com';
+const API_PATH = process.env.CLAWUSECASE_API_PATH || config.apiPath || '/api/submissions';
 
 // Parse command line arguments
 function parseArgs() {
@@ -109,18 +115,22 @@ async function submit(data) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(data);
     
+    // Use http for localhost, https otherwise
+    const isLocalhost = API_URL.includes('localhost') || API_URL.includes('127.0.0.1');
+    const protocol = isLocalhost ? http : https;
+    
     const options = {
-      hostname: API_URL,
+      hostname: API_URL.replace(/:\d+$/, ''), // Remove port from hostname
+      port: API_URL.match(/:(\d+)$/)?.[1] || (isLocalhost ? 3000 : 443),
       path: API_PATH,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload),
-        'Authorization': `Bearer ${API_SECRET}`
+        'Content-Length': Buffer.byteLength(payload)
       }
     };
     
-    const req = https.request(options, (res) => {
+    const req = protocol.request(options, (res) => {
       let body = '';
       
       res.on('data', (chunk) => {
@@ -154,13 +164,6 @@ async function submit(data) {
 // Main
 async function main() {
   const args = parseArgs();
-  
-  // Check for API secret
-  if (!API_SECRET) {
-    console.error('❌ API_SECRET not set');
-    console.error('Set CLAWUSECASE_API_SECRET environment variable');
-    process.exit(1);
-  }
   
   // Load config for author info
   const config = getConfig();

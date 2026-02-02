@@ -138,7 +138,7 @@ For other errors, show the error message and offer to retry.
 
 ## Author Information
 
-The skill needs to know the user's information for attribution. On first use, ask:
+On first use, ask the user for their attribution info:
 
 ```
 To submit use cases, I need your info for attribution:
@@ -149,7 +149,7 @@ To submit use cases, I need your info for attribution:
 I'll save this for future submissions.
 ```
 
-Store in a local config file `.clawusecase-config.json`:
+Store it locally in `.clawusecase-config.json`:
 ```json
 {
   "authorUsername": "josephliow",
@@ -158,6 +158,8 @@ Store in a local config file `.clawusecase-config.json`:
   "authorLink": "https://twitter.com/josephliow"
 }
 ```
+
+This is saved in the skill directory for future use.
 
 ## Tips for Good Use Cases
 
@@ -257,9 +259,6 @@ Your use case is now live for the community to see. Thanks for sharing! 🎉
 
 **"Command not found: node"**
 Node.js is required. Install it: `brew install node` (macOS) or from nodejs.org
-
-**"API_SECRET not set"**
-The submit script needs API credentials. These should be bundled with the skill or set as environment variables.
 
 **"Failed to connect to API"**
 Check internet connection and that clawusecase.com is accessible.

@@ -1,0 +1,4 @@
+{
+  "apiUrl": "localhost:3000",
+  "apiPath": "/api/submissions"
+}
