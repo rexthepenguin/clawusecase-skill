@@ -2,7 +2,7 @@
 name: share-usecase
 description: "Share your OpenClaw use case to clawusecase.com. Analyzes your recent work and creates a submission for the community."
 author: "Rex 🐧"
-version: "1.0.0"
+version: "2.0.0"
 ---
 
 # Share Use Case Skill
@@ -19,7 +19,19 @@ Trigger this skill when the user wants to share a use case they've built with Op
 
 ## How It Works
 
-### 1. Analyze Recent Context
+### 1. Greet and Explain
+
+When the user triggers `/share-usecase`, start with a friendly greeting:
+
+```
+🐧 Share Your Use Case
+
+Hey! clawusecase.com is a community showcase where OpenClaw users share what they've built to inspire others.
+
+Let me look at what you've been working on and draft a use case for you...
+```
+
+### 2. Analyze Recent Context
 
 Look back at the conversation history (last 50-100 messages or past few hours) to understand what the user built. Look for:
 - What problem they were trying to solve
@@ -27,7 +39,7 @@ Look back at the conversation history (last 50-100 messages or past few hours) t
 - How they solved it
 - Any requirements or setup needed
 
-### 2. Generate Use Case Structure
+### 3. Generate Use Case Structure
 
 Create a well-structured use case with these fields:
 
@@ -42,9 +54,9 @@ Create a well-structured use case with these fields:
 **Optional:**
 - `requirements` - What you need to use this (API keys, accounts, etc.)
 
-### 3. Normalize Tools/Skills
+### 4. Normalize Tools/Skills
 
-Before submitting, normalize tool names using `normalize-tools.js`:
+Before finalizing, normalize tool names using `normalize-tools.js`:
 
 ```bash
 node normalize-tools.js "github,stripe api,resend email"
@@ -52,12 +64,12 @@ node normalize-tools.js "github,stripe api,resend email"
 
 This ensures consistent naming (e.g., "github" → "GitHub", "stripe api" → "Stripe").
 
-### 4. Get User Approval
+### 5. Show Preview and Get Approval
 
 Present the generated use case to the user in a clean format:
 
 ```
-📋 Use Case Ready for Submission
+📋 Use Case Draft
 
 Title: Email notifications for Pro subscriptions
 Hook: Sends welcome emails automatically when users upgrade
@@ -69,18 +81,58 @@ Category: Business/SaaS
 Tools: GitHub, Stripe, Resend
 Requirements: Resend account, Stripe webhooks configured
 
-Ready to submit? (yes/no)
-```
-
-Ask if they want to:
+Would you like to:
 - Submit as-is
 - Edit any fields
 - Cancel
+```
 
-### 5. Submit to API
+If they want to edit, iterate until they're happy.
 
-Once approved, use `submit.js` to POST to the API:
+### 6. Ask About Attribution
 
+Once they approve the content, ask about attribution:
+
+```
+Would you like to be credited for this submission?
+
+Options:
+1. ✅ Yes, credit me (connect Twitter or GitHub)
+2. 🎭 No, submit anonymously
+
+If you choose credit, you'll get a link on the live use case and build your profile in the community!
+```
+
+**If they choose credit:**
+
+Generate OAuth links and send them:
+
+```
+Great! Connect your account to get credit:
+
+🐦 Twitter: [init Twitter OAuth and get URL]
+😺 GitHub: [init GitHub OAuth and get URL]
+
+Click one of the links above to authenticate. Once connected, let me know and I'll submit your use case!
+```
+
+Wait for them to complete OAuth, then retrieve their credential using `get-credential.js`:
+
+```bash
+node get-credential.js --token [oauth_token]
+```
+
+This will return their verified identity from Convex.
+
+**If they choose anonymous:**
+
+Proceed with anonymous submission (no author info).
+
+### 7. Submit to API
+
+Use `submit.js` to POST to the API:
+
+**With attribution:**
 ```bash
 node submit.js \
   --title "Email notifications for Pro subscriptions" \
@@ -96,18 +148,22 @@ node submit.js \
   --author-link "https://twitter.com/josephliow"
 ```
 
-### 6. Confirm Submission
-
-If successful, the script returns:
-```json
-{
-  "success": true,
-  "slug": "email-notifications-for-pro-subscriptions",
-  "url": "https://clawusecase.com/cases/email-notifications-for-pro-subscriptions"
-}
+**Anonymous:**
+```bash
+node submit.js \
+  --title "Email notifications for Pro subscriptions" \
+  --hook "Sends welcome emails automatically when users upgrade" \
+  --problem "No email notifications when users subscribe to Pro plan" \
+  --solution "Built Resend integration with React Email templates..." \
+  --category "Business/SaaS" \
+  --skills "GitHub,Stripe,Resend" \
+  --requirements "Resend account, Stripe webhooks configured" \
+  --anonymous
 ```
 
-Share the link with the user:
+### 8. Confirm Submission
+
+If successful, share the link with the user:
 ```
 ✅ Use case submitted successfully!
 
@@ -135,31 +191,6 @@ Let's fix that. What would you like the title to be?
 
 ### API Errors
 For other errors, show the error message and offer to retry.
-
-## Author Information
-
-On first use, ask the user for their attribution info:
-
-```
-To submit use cases, I need your info for attribution:
-
-1. What's your Twitter/X handle? (e.g., josephliow)
-2. What platform? (twitter, github, etc.)
-
-I'll save this for future submissions.
-```
-
-Store it locally in `.clawusecase-config.json`:
-```json
-{
-  "authorUsername": "josephliow",
-  "authorHandle": "josephliow",
-  "authorPlatform": "twitter",
-  "authorLink": "https://twitter.com/josephliow"
-}
-```
-
-This is saved in the skill directory for future use.
 
 ## Tips for Good Use Cases
 
@@ -195,7 +226,7 @@ Help users pick the right category:
 
 ## Rate Limiting
 
-Users can submit up to **10 use cases per day**. The API tracks by `authorUsername`.
+Users can submit up to **10 use cases per day**. The API tracks by `authorUsername` (or IP for anonymous).
 
 If they hit the limit, suggest:
 - Wait until tomorrow
@@ -218,11 +249,15 @@ Help users meet these requirements before submitting.
 
 ```
 User: I just built email notifications for when users subscribe
-You: That sounds useful! Want to share it as a use case on clawusecase.com?
-User: Yeah!
-You: [analyzes recent conversation]
+You: 🐧 Share Your Use Case
 
-📋 I've drafted a use case based on our conversation:
+Hey! clawusecase.com is a community showcase where OpenClaw users share what they've built to inspire others.
+
+Let me look at what you've been working on and draft a use case for you...
+
+[analyzes recent conversation]
+
+📋 Use Case Draft
 
 Title: Email notifications for Pro subscriptions
 Hook: Automatically sends welcome emails when users upgrade to Pro
@@ -235,12 +270,30 @@ Category: Business/SaaS
 Tools: Stripe, Resend, React, GitHub
 Requirements: Resend account, Stripe webhooks configured
 
-Does this look good, or would you like to edit anything?
+Would you like to:
+- Submit as-is
+- Edit any fields
+- Cancel
 
 User: Looks perfect!
-You: [submits via submit.js]
+You: Great! Would you like to be credited for this submission?
 
-✅ Use case submitted!
+Options:
+1. ✅ Yes, credit me (connect Twitter or GitHub)
+2. 🎭 No, submit anonymously
+
+User: Yes, credit me
+You: Awesome! Connect your account to get credit:
+
+🐦 Twitter: https://clawusecase.com/auth/connect?token=abc123&platform=twitter
+😺 GitHub: https://clawusecase.com/auth/connect?token=def456&platform=github
+
+Click one of the links above. Once you've connected, let me know!
+
+User: Done!
+You: [retrieves credential, submits]
+
+✅ Use case submitted successfully!
 
 View it here: https://clawusecase.com/cases/email-notifications-for-pro-subscriptions
 
@@ -251,9 +304,10 @@ Your use case is now live for the community to see. Thanks for sharing! 🎉
 
 - `SKILL.md` - This file (instructions)
 - `submit.js` - Submits use case to clawusecase.com API
+- `get-credential.js` - Retrieves OAuth credential from Convex after auth
 - `normalize-tools.js` - Normalizes tool/skill names
 - `README.md` - User documentation
-- `.clawusecase-config.json` - Stores user's author info (created on first use)
+- `config.json` - Skill configuration
 
 ## Troubleshooting
 
@@ -262,3 +316,6 @@ Node.js is required. Install it: `brew install node` (macOS) or from nodejs.org
 
 **"Failed to connect to API"**
 Check internet connection and that clawusecase.com is accessible.
+
+**"OAuth token not found"**
+The token might have expired (10 min timeout). Generate a fresh OAuth link.

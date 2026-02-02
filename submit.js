@@ -16,10 +16,12 @@
  *     --author-handle "josephliow" \
  *     --author-platform "twitter" \
  *     --author-link "https://twitter.com/josephliow"
+ * 
+ * Or for anonymous:
+ *   node submit.js ... --anonymous
  */
 
 const https = require('https');
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
@@ -29,7 +31,7 @@ const config = fs.existsSync(configPath)
   ? JSON.parse(fs.readFileSync(configPath, 'utf8'))
   : {};
 
-// API Configuration (env var overrides config file)
+// API Configuration
 const API_URL = process.env.CLAWUSECASE_API_URL || config.apiUrl || 'clawusecase.com';
 const API_PATH = process.env.CLAWUSECASE_API_PATH || config.apiPath || '/api/submissions';
 
@@ -38,47 +40,26 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const parsed = {};
   
-  for (let i = 0; i < args.length; i += 2) {
-    const key = args[i].replace(/^--/, '').replace(/-/g, '_');
-    const value = args[i + 1];
-    parsed[key] = value;
-  }
-  
-  return parsed;
-}
-
-// Generate slug from title
-function slugify(text) {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-}
-
-// Load or create config for author info
-function getConfig() {
-  const configPath = path.join(process.cwd(), '.clawusecase-config.json');
-  
-  if (fs.existsSync(configPath)) {
-    try {
-      return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    } catch (err) {
-      console.error('⚠️  Failed to read config:', err.message);
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    
+    // Handle flags like --anonymous
+    if (arg.startsWith('--') && (i + 1 >= args.length || args[i + 1].startsWith('--'))) {
+      const key = arg.replace(/^--/, '').replace(/-/g, '_');
+      parsed[key] = true;
+      continue;
+    }
+    
+    // Handle key-value pairs
+    if (arg.startsWith('--')) {
+      const key = arg.replace(/^--/, '').replace(/-/g, '_');
+      const value = args[i + 1];
+      parsed[key] = value;
+      i++; // Skip next arg since we consumed it
     }
   }
   
-  return {};
-}
-
-// Save config
-function saveConfig(config) {
-  const configPath = path.join(process.cwd(), '.clawusecase-config.json');
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  return parsed;
 }
 
 // Validate required fields
@@ -103,9 +84,6 @@ function validate(data) {
   if (!data.skills || data.skills.length === 0) {
     errors.push('At least one skill/tool is required');
   }
-  if (!data.authorUsername) {
-    errors.push('Author username is required');
-  }
   
   return errors;
 }
@@ -115,13 +93,9 @@ async function submit(data) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(data);
     
-    // Use http for localhost, https otherwise
-    const isLocalhost = API_URL.includes('localhost') || API_URL.includes('127.0.0.1');
-    const protocol = isLocalhost ? http : https;
-    
     const options = {
-      hostname: API_URL.replace(/:\d+$/, ''), // Remove port from hostname
-      port: API_URL.match(/:(\d+)$/)?.[1] || (isLocalhost ? 3000 : 443),
+      hostname: API_URL,
+      port: 443,
       path: API_PATH,
       method: 'POST',
       headers: {
@@ -130,7 +104,7 @@ async function submit(data) {
       }
     };
     
-    const req = protocol.request(options, (res) => {
+    const req = https.request(options, (res) => {
       let body = '';
       
       res.on('data', (chunk) => {
@@ -165,9 +139,6 @@ async function submit(data) {
 async function main() {
   const args = parseArgs();
   
-  // Load config for author info
-  const config = getConfig();
-  
   // Build submission data
   const data = {
     title: args.title,
@@ -177,25 +148,29 @@ async function main() {
     category: args.category,
     skills: args.skills ? args.skills.split(',').map(s => s.trim()) : [],
     requirements: args.requirements || undefined,
-    authorUsername: args.author_username || config.authorUsername,
-    authorHandle: args.author_handle || config.authorHandle,
-    authorPlatform: args.author_platform || config.authorPlatform || 'twitter',
-    authorLink: args.author_link || config.authorLink,
-    slug: slugify(args.title),
-    implementationPrompt: `I want to implement this use case from clawusecase.com:
-
-**${args.title}**
-
-Problem: ${args.problem}
-
-Solution: ${args.solution}
-
-Requirements: ${args.requirements || 'None specified'}
-
-Tools needed: ${args.skills}
-
-Can you help me build this step-by-step?`
   };
+  
+  // Add author info if not anonymous
+  if (!args.anonymous) {
+    if (!args.author_username || !args.author_handle || !args.author_platform) {
+      console.error('❌ Missing author info. Either provide --author-username, --author-handle, --author-platform, or use --anonymous');
+      process.exit(1);
+    }
+    
+    data.author = {
+      username: args.author_username,
+      handle: args.author_handle,
+      platform: args.author_platform,
+      link: args.author_link || undefined,
+    };
+  } else {
+    // Anonymous submission
+    data.author = {
+      username: 'anonymous',
+      handle: 'Anonymous',
+      platform: 'anonymous',
+    };
+  }
   
   // Validate
   const errors = validate(data);
@@ -203,16 +178,6 @@ Can you help me build this step-by-step?`
     console.error('❌ Validation failed:');
     errors.forEach(err => console.error(`  - ${err}`));
     process.exit(1);
-  }
-  
-  // Save author info to config for future use
-  if (data.authorUsername && !config.authorUsername) {
-    saveConfig({
-      authorUsername: data.authorUsername,
-      authorHandle: data.authorHandle,
-      authorPlatform: data.authorPlatform,
-      authorLink: data.authorLink
-    });
   }
   
   // Submit

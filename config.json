@@ -1,4 +1,5 @@
 {
-  "apiUrl": "localhost:3000",
-  "apiPath": "/api/submissions"
+  "apiUrl": "clawusecase.com",
+  "apiPath": "/api/submissions",
+  "convexUrl": "benevolent-tortoise-657.convex.cloud"
 }
