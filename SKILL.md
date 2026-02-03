@@ -1,5 +1,5 @@
 ---
-name: share-usecase
+name: share_usecase
 description: "Share your OpenClaw use case to clawusecase.com. Analyzes your recent work and creates a submission for the community."
 author: "Rex 🐧"
 version: "2.0.0"
@@ -12,7 +12,7 @@ This skill helps you share your OpenClaw use cases to [clawusecase.com](https://
 ## When to Use
 
 Trigger this skill when the user wants to share a use case they've built with OpenClaw. They might say:
-- "/share-usecase"
+- "/share_usecase"
 - "I want to share this use case"
 - "Let me submit this to clawusecase"
 - "Share what I just built"
@@ -25,7 +25,7 @@ Trigger this skill when the user wants to share a use case they've built with Op
 
 ### 1. Greet and Explain
 
-When the user triggers `/share-usecase`, start with a friendly greeting:
+When the user triggers `/share_usecase`, start with a friendly greeting:
 
 ```
 🐧 Share Your Use Case

@@ -4,7 +4,7 @@ Share your OpenClaw use cases to [clawusecase.com](https://clawusecase.com) - a 
 
 ## What It Does
 
-When you trigger `/share-usecase` in your OpenClaw chat, your assistant will:
+When you trigger `/share_usecase` in your OpenClaw chat, your assistant will:
 
 1. **Analyze what you built** - Looks at your recent conversation to understand your project
 2. **Draft a use case** - Creates a well-structured submission with title, problem, solution, and tools used
@@ -16,7 +16,7 @@ When you trigger `/share-usecase` in your OpenClaw chat, your assistant will:
 
 Just say:
 ```
-/share-usecase
+/share_usecase
 ```
 
 Your assistant handles the rest!
@@ -45,7 +45,7 @@ Submit without attribution if you prefer privacy
 ## How It Works Behind the Scenes
 
 ### For Users
-1. Trigger `/share-usecase`
+1. Trigger `/share_usecase`
 2. Review the generated draft
 3. Choose attribution or anonymous
 4. Done! Your use case is live
